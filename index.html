@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasty Bites</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+        integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="app.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
+    <style>
+    /* ---------- Sidebar (dark, amber highlight) ---------- */
+    .tb-side{--bg:#1b1815;--panel:#26221d;--line:rgba(255,255,255,.08);--ink:#f3ede3;--mute:#a79f93;--amber:#ffb400;
+      position:fixed;top:0;left:0;bottom:0;width:260px;z-index:1100;background:var(--bg);color:var(--ink);
+      display:flex;flex-direction:column;gap:18px;padding:22px 16px;overflow-y:auto;
+      font-family:'Nunito',sans-serif;font-size:15px;line-height:1.3;transform:translateX(-100%);transition:transform .25s ease}
+    .tb-side.open{transform:none}
+    .tb-side *{box-sizing:border-box}
+    .tb-side-brand{display:flex;align-items:center;gap:10px;padding:0 6px 16px;border-bottom:1px solid var(--line);
+      color:var(--ink);text-decoration:none;font-size:26px;font-weight:800;font-style:italic}
+    .tb-side-brand i{color:var(--amber);font-size:24px}
+    .tb-side-user{display:flex;align-items:center;gap:12px;padding:0 6px 16px;border-bottom:1px solid var(--line)}
+    .tb-side-av{width:46px;height:46px;flex:none;border-radius:12px;background:var(--amber) center/cover no-repeat;color:var(--bg);
+      display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}
+    .tb-side-user b{display:block;font-size:15px;font-weight:700;word-break:break-word}
+    .tb-side-user small{color:var(--mute);font-size:12px}
+    .tb-side-nav{display:flex;flex-direction:column;gap:6px}
+    .tb-side-nav a,.tb-side-nav button{display:flex;align-items:center;gap:14px;width:100%;padding:13px 14px;border:0;border-radius:12px;
+      background:none;color:var(--mute);font:inherit;font-weight:700;text-align:left;text-decoration:none;cursor:pointer;text-transform:none}
+    .tb-side-nav i{width:20px;text-align:center;font-size:16px}
+    .tb-side-nav a:hover,.tb-side-nav button:hover{background:var(--panel);color:var(--ink)}
+    .tb-side-nav .active{background:var(--amber);color:var(--bg)}
+    .tb-side-nav em{margin-left:auto;min-width:22px;padding:2px 7px;border-radius:7px;background:#ff5a36;color:#fff;
+      font-style:normal;font-size:12px;font-weight:800;text-align:center}
+    .tb-side-promo{margin-top:auto;display:block;padding:16px;border:1px solid rgba(255,180,0,.35);border-radius:14px;
+      background:rgba(255,180,0,.07);color:var(--ink);text-decoration:none}
+    .tb-side-promo i{display:block;margin-bottom:10px;color:var(--amber);font-size:20px}
+    .tb-side-promo b{display:block;font-size:14px}
+    .tb-side-promo small{color:var(--mute);font-size:12px}
+    .tb-side-out{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;
+      background:none;color:#ff7a59;font:inherit;font-weight:700;cursor:pointer;text-transform:none}
+    .tb-side-toggle{position:fixed;left:18px;bottom:22px;z-index:1090;width:50px;height:50px;border:0;border-radius:14px;
+      background:#ffb400;color:#1b1815;font-size:20px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+    .tb-side-shade{position:fixed;inset:0;z-index:1095;background:rgba(0,0,0,.5);display:none}
+    .tb-side-shade.show{display:block}
+    body.tb-locked .tb-side,body.tb-locked .tb-side-toggle,body.tb-locked .tb-side-shade{display:none}
+    .tb-side :focus-visible,.tb-side-toggle:focus-visible{outline:2px solid #ffb400;outline-offset:2px}
+    @media (min-width:1200px){
+      .tb-side{transform:none}
+      .tb-side-toggle,.tb-side-shade{display:none !important}
+      body:not(.tb-locked){padding-left:260px}
+      body:not(.tb-locked) header{left:260px;width:calc(100% - 260px)}
+      body:not(.tb-locked) header .navbar{display:none}
+    }
+    @media (prefers-reduced-motion:reduce){.tb-side{transition:none}}
+    </style>
+</head>
+
+<body class="tb-locked">
+    <aside class="tb-side" id="tbSide" aria-label="Main menu">
+        <a class="tb-side-brand" href="#home"><i class="fas fa-concierge-bell"></i><span>Tasty Bites</span></a>
+        <div class="tb-side-user">
+            <span class="tb-side-av" id="sideAv">G</span>
+            <div><b id="sideName">Guest</b><small>Customer account</small></div>
+        </div>
+        <nav class="tb-side-nav">
+            <a href="#home" data-s="home"><i class="fas fa-th-large"></i>Home</a>
+            <a href="#menu" data-s="menu"><i class="fas fa-utensils"></i>Explore Menu</a>
+            <button type="button" id="sideCart"><i class="fas fa-shopping-bag"></i>My Cart<em id="sideCount">0</em></button>
+            <a href="#offers" data-s="offers"><i class="fas fa-tags"></i>Offers</a>
+            <a href="#order" data-s="order"><i class="fas fa-receipt"></i>Checkout</a>
+        </nav>
+        <a class="tb-side-promo" href="#offers"><i class="fas fa-gift"></i><b>50% off your first order</b><small>See all offers</small></a>
+        <button type="button" class="tb-side-out" id="sideOut"><i class="fas fa-sign-out-alt"></i>Sign out</button>
+    </aside>
+    <button type="button" class="tb-side-toggle" id="sideToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+    <div class="tb-side-shade" id="sideShade"></div>
+    <div class="tb-gate open" id="loginPage" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+        <div class="tb-gate-hero">
+            <div class="tb-gate-brand"><i class="fas fa-utensils"></i> Tasty Bites</div>
+            <h1>Real Indian flavours,<br>delivered hot.</h1>
+            <p>Biryani, dosa, butter chicken and more. Sign in to unlock offers and order in minutes.</p>
+            <ul>
+                <li>🎁 50% off your first order</li>
+                <li>🛵 Free delivery above ₹499</li>
+            </ul>
+            <img class="tb-gate-img" src="images/home-img.png" alt="">
+        </div>
+
+        <div class="tb-gate-panel">
+            <div class="tb-gate-card">
+                <h2 id="gateTitle">Welcome 👋</h2>
+                <p class="tb-gate-sub">Sign in to continue to Tasty Bites</p>
+
+                <div id="gateGoogle" class="tb-gate-google"></div>
+
+                <div class="tb-or"><span>or use your email</span></div>
+
+                <div class="tb-tabs">
+                    <button type="button" class="active" data-gate-tab="login">Log in</button>
+                    <button type="button" data-gate-tab="signup">Sign up</button>
+                </div>
+
+                <form id="gateForm" novalidate>
+                    <div id="gateNameRow" hidden>
+                        <label for="g-name">Full name</label>
+                        <input id="g-name" name="gname" type="text" autocomplete="name" placeholder="Your name">
+                    </div>
+                    <label for="g-email">Email</label>
+                    <input id="g-email" name="gemail" type="email" autocomplete="email" placeholder="you@gmail.com">
+                    <label for="g-pass">Password</label>
+                    <input id="g-pass" name="gpassword" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+                    <p class="tb-error" id="gateError" role="alert"></p>
+                    <button type="submit" class="btn0" id="gateSubmit">Log in</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <header>
+        <a href="#" class="logo"><i class="fas fa-utensils"></i>food</a>
+
+        <div id="menu-bar" class="fas fa-bars"></div>
+
+        <nav class="navbar">
+            <a href="#home">home</a>
+            <a href="#offers">offers</a>
+            <a href="#menu">indian menu</a>
+            <a href="#speciality">special</a>
+            <a href="#popular">popular</a>
+        </nav>
+
+        <div class="tb-actions">
+            <button type="button" class="tb-cart-btn" id="cartBtn" aria-label="Open cart">
+                <i class="fas fa-shopping-cart"></i><span id="cartCount">0</span>
+            </button>
+            <div id="authArea"></div>
+        </div>
+    </header>
+    <section class="home" id="home">
+        <div class="content">
+            <h3>Tasty Bites</h3>
+            <p>Welcome to Tasty Bites, where every meal is a culinary masterpiece delivered straight to your door.
+                Explore a world of flavors with our diverse menu, curated from the finest ingredients and prepared by
+                top chefs. Whether you're craving gourmet cuisine, comforting classics, or exotic dishes, SavorDelight
+                promises a dining experience that's always fresh, delicious, and convenient. Order now and indulge in
+                the delight of exceptional food, made just for you. Bon appétit!</p>
+            <a href="#menu" class="btn">order now</a>
+        </div>
+
+        <div class="image">
+            <img src="images/home-img.png" alt="">
+        </div>
+    </section>
+
+    <section class="tb-offers" id="offers">
+        <h1 class="heading">hot <span>offers</span> &amp; deals</h1>
+        <p class="tb-sub">Tap Apply to save a code, then use it at checkout.</p>
+        <div class="tb-offer-grid" id="offerGrid"></div>
+    </section>
+
+    <section class="tb-menu" id="menu">
+        <h1 class="heading">indian <span>food</span> menu</h1>
+        <p class="tb-sub">Authentic North and South Indian dishes, cooked fresh.</p>
+        <div class="tb-chips" id="menuChips"></div>
+        <div class="tb-grid" id="menuGrid"></div>
+    </section>
+
+    <section class="speciality" id="speciality">
+
+        <h1 class="heading"> our's <span>special</span> </h1>
+
+        <div class="box-container">
+
+            <div class="box">
+                <img class="image" src="images/s-img-1.jpg" alt="">
+                <div class="content">
+                    <img src="images/s-1.png" alt="">
+                    <h3>tasty burger</h3>
+                    <p><span>in our Tasty Burger, a perfect blend of succulent, premium beef, fresh, crisp vegetables,
+                            and our signature sauce, all nestled in a perfectly toasted bun. Each bite promises a burst
+                            of
+                            mouthwatering flavors that will leave you craving more. Experience burger perfection
+                            today!</span> </p>
+
+                </div>
+            </div>
+            <div class="box">
+                <img class="image" src="images/s-img-2.jpg" alt="">
+                <div class="content">
+                    <img src="images/s-2.png" alt="">
+                    <h3>tasty pizza</h3>
+                    <p><span>Savor our Tasty Pizza, crafted with a crispy, golden crust, rich tomato sauce, and the
+                            finest,
+                            freshest toppings. Melted cheese and a perfect blend of herbs make every slice a delightful
+                            experience. Enjoy a slice of pizza perfection!</span></p>
+
+                </div>
+            </div>
+            <div class="box">
+                <img class="image" src="images/s-img-3.jpg" alt="">
+                <div class="content">
+                    <img src="images/s-3.png" alt="">
+                    <h3>cold ice-cream</h3>
+                    <p><span>Treat yourself to our Cold Ice Cream, a creamy, dreamy delight that melts in your mouth.
+                            Choose
+                            from a variety of rich, indulgent flavors, each crafted to perfection. Refreshingly cool and
+                            irresistibly smooth, it's the perfect treat for any time of day.</span></p>
+
+                </div>
+            </div>
+            <div class="box">
+                <img class="image" src="images/s-img-4.jpg" alt="">
+                <div class="content">
+                    <img src="images/s-4.png" alt="">
+                    <h3>cold drinks</h3>
+                    <p><span>Quench your thirst with our Cold Drinks, a refreshing selection of beverages that offer a
+                            burst of cool, invigorating flavors. Whether you prefer classic sodas, sparkling waters, or
+                            fruity refreshments, each sip is a delightful way to stay cool and refreshed. Enjoy the
+                            chill!</span></p>
+
+                </div>
+            </div>
+            <div class="box">
+                <img class="image" src="images/s-img-5.jpg" alt="">
+                <div class="content">
+                    <img src="images/s-5.png" alt="">
+                    <h3>tasty sweets</h3>
+                    <p><span>Delight in our Tasty Sweets, a heavenly assortment of desserts crafted to satisfy your
+                            sweet tooth. From decadent cakes and pastries to creamy puddings and confections, each treat
+                            is made with the finest ingredients for an indulgent experience. Enjoy the sweetness in
+                            every bite!</span></p>
+
+                </div>
+            </div>
+            <div class="box">
+                <img class="image" src="images/s-img-6.jpg" alt="">
+                <div class="content">
+                    <img src="images/s-6.png" alt="">
+                    <h3>tasty breakfast</h3>
+                    <p><span>Start your day right with our Tasty Breakfast, featuring a delicious array of morning
+                            favorites. From fluffy pancakes and golden waffles to hearty omelets and fresh fruit bowls,
+                            every dish is made to energize and satisfy. Enjoy a breakfast that's both delicious and
+                            nourishing!</span></p>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="popular" id="popular">
+
+        <h1 class="heading">ower <span>popular</span> foods</h1>
+
+        <div class="box-container">
+
+            <div class="box">
+                <span class="price"> ₹150 - ₹450 </span>
+                <img src="images/p-1.jpg" alt="burger">
+                <h3>tasty burger</h3>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <a href="#menu" class="btn">order now</a>
+            </div>
+
+            <div class="box">
+                <span class="price"> ₹500 - ₹2100 </span>
+                <img src="images/p-2.jpg" alt="cakes">
+                <h3>tasty cakes</h3>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <a href="#menu" class="btn">order now</a>
+            </div>
+
+            <div class="box">
+                <span class="price"> ₹50 - ₹400 </span>
+                <img src="images/p-3.jpg" alt="sweets">
+                <h3>tasty sweets</h3>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <a href="#menu" class="btn">order now</a>
+            </div>
+
+            <div class="box">
+                <span class="price"> ₹30 - ₹600 </span>
+                <img src="images/p-4.jpg" alt="cupcakes">
+                <h3>tasty cupcakes</h3>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <a href="#menu" class="btn">order now</a>
+            </div>
+
+            <div class="box">
+                <span class="price"> ₹40 - ₹120 </span>
+                <img src="images/p-5.jpg" alt="drinks">
+                <h3>cold drinks</h3>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <a href="#menu" class="btn">order now</a>
+            </div>
+
+            <div class="box">
+                <span class="price"> ₹35 - ₹380 </span>
+                <img src="images/p-6.jpg" alt="ice-cream">
+                <h3>tasty ice-creams</h3>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <a href="#menu" class="btn">order now</a>
+            </div>
+        </div>
+    </section>
+
+<!--     <section class="steps">
+
+        <div class="box">
+            <img src="images/step-1.jpg" alt="">
+            <h3>choose your favourite food</h3>
+        </div>
+        <div class="box">
+            <img src="images/step-2.jpg" alt="">
+            <h3>free and fast delivery</h3>
+        </div>
+        <div class="box">
+            <img src="images/step-3.jpg" alt="">
+            <h3>easy payment methods</h3>
+        </div>
+        <div class="box">
+            <img src="images/step-4.jpg" alt="">
+            <h3>and finally, enjoy your food</h3>
+        </div>
+    </section> -->
+
+    <section class="tb-checkout" id="order">
+        <h1 class="heading"><span>checkout</span> &amp; order</h1>
+        <div class="tb-checkout-wrap">
+            <div class="tb-card">
+                <h2>Delivery details</h2>
+                <div id="loginNotice"></div>
+                <form id="orderForm" novalidate>
+                    <label for="f-name">Full name</label>
+                    <input id="f-name" name="name" type="text" autocomplete="name" placeholder="Your name">
+                    <div class="tb-two">
+                        <div>
+                            <label for="f-email">Gmail (from Google login)</label>
+                            <input id="f-email" name="email" type="email" readonly>
+                        </div>
+                        <div>
+                            <label for="f-phone">Mobile number</label>
+                            <input id="f-phone" name="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number">
+                        </div>
+                    </div>
+                    <label for="f-address">Delivery address</label>
+                    <textarea id="f-address" name="address" placeholder="House no, street, area, city, pincode"></textarea>
+                    <label for="f-payment">Payment</label>
+                    <select id="f-payment" name="payment">
+                        <option>Cash on Delivery</option>
+                        <option>UPI on Delivery</option>
+                        <option>Card on Delivery</option>
+                    </select>
+                    <label for="f-notes">Cooking instructions (optional)</label>
+                    <input id="f-notes" name="notes" type="text" placeholder="Less spicy, no onion...">
+                    <p class="tb-error" id="formError" role="alert"></p>
+                    <button type="submit" class="btn0">Place order</button>
+                </form>
+            </div>
+
+            <div class="tb-card">
+                <h2>Order summary</h2>
+                <div id="summaryItems"></div>
+                <div class="tb-coupon">
+                    <input id="couponInput" type="text" placeholder="Coupon code" aria-label="Coupon code">
+                    <button type="button" id="applyCoupon">Apply</button>
+                </div>
+                <div class="tb-coupon-msg" id="couponMsg"></div>
+                <div id="billBox"></div>
+            </div>
+        </div>
+    </section>
+
+    <a href="#home" class="fas fa-angle-up" id="scroll-top"></a>
+
+    <div class="loader-container">
+        <img src="images/loader.gif" alt="">
+    </div>
+
+    <div class="tb-overlay" id="overlay"></div>
+    <aside class="tb-drawer" id="cartDrawer" aria-label="Your cart">
+        <div class="tb-drawer-head"><h2>Your cart</h2><button type="button" id="closeCart" aria-label="Close cart">&times;</button></div>
+        <div id="drawerItems"></div>
+        <div class="tb-drawer-foot">
+            <div id="drawerTotal"></div>
+            <a href="#order" class="btn0" id="goCheckout">Go to checkout</a>
+        </div>
+    </aside>
+
+    <div class="tb-modal" id="successModal">
+        <div class="tb-modal-box">
+            <div id="successBody"></div>
+            <button type="button" class="btn0" id="closeSuccess">Done</button>
+        </div>
+    </div>
+
+    <div class="tb-toasts" id="toasts" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Real food photos for the menu cards. Looks for images/<dish-name>.jpg; if missing, the emoji stays. -->
+    <script>
+    (function () {
+      var grid = document.getElementById('menuGrid');
+      if (!grid) return;
+
+      function clean(t) {
+        return t.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      }
+
+      function apply() {
+        grid.querySelectorAll('h3').forEach(function (h) {
+          var card = h;
+          while (card.parentElement && card.parentElement !== grid) card = card.parentElement;
+          if (card.dataset.photo) return;
+          card.dataset.photo = '1';
+
+          var top = card.firstElementChild;
+          if (!top) return;
+
+          var hidden = [];
+          Array.prototype.forEach.call(top.children, function (c) {
+            var txt = c.textContent.trim();
+            if (c.tagName === 'IMG' || c.tagName === 'SVG' || (txt && txt.indexOf('\u2605') === -1)) {
+              hidden.push(c);
+            }
+          });
+
+          var name = h.textContent.trim();
+          var tries = [clean(name), clean(name.replace(/\(.*?\)/g, ''))];
+          var n = 0;
+
+          var img = new Image();
+          img.alt = name;
+          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0';
+          img.onload = function () {
+            hidden.forEach(function (c) { c.style.display = 'none'; });
+          };
+          img.onerror = function () {
+            n++;
+            if (n < tries.length && tries[n] !== tries[n - 1]) img.src = 'images/' + tries[n] + '.jpg';
+            else img.remove();
+          };
+          img.src = 'images/' + tries[0] + '.jpg';
+
+          top.style.position = 'relative';
+          top.style.overflow = 'hidden';
+          top.insertBefore(img, top.firstChild);
+        });
+      }
+
+      new MutationObserver(apply).observe(grid, { childList: true });
+      apply();
+    })();
+    </script>
+
+    <script>
+    (function () {
+      var $ = function (i) { return document.getElementById(i); };
+      var side = $('tbSide'), shade = $('sideShade');
+      function openSide(v) { side.classList.toggle('open', v); shade.classList.toggle('show', v); }
+      $('sideToggle').onclick = function () { openSide(!side.classList.contains('open')); };
+      shade.onclick = function () { openSide(false); };
+      side.addEventListener('click', function (e) { if (e.target.closest('a,button')) openSide(false); });
+
+      $('sideCart').onclick = function () { var b = $('cartBtn'); if (b) b.click(); };
+
+      function syncCount() {
+        var c = $('cartCount'), n = c ? c.textContent.trim() : '0', s = $('sideCount');
+        s.textContent = n; s.style.display = (n && n !== '0') ? '' : 'none';
+      }
+      var cc = $('cartCount');
+      if (cc) new MutationObserver(syncCount).observe(cc, { childList: true, characterData: true, subtree: true });
+      syncCount();
+
+      function syncUser() {
+        var u = document.querySelector('#authArea .tb-user'), nm = $('sideName'), av = $('sideAv'), out = $('sideOut');
+        if (!u) { nm.textContent = 'Guest'; av.textContent = 'G'; av.style.backgroundImage = ''; out.style.display = 'none'; return; }
+        var el = u.querySelector('.tb-user-name'), n = (el ? el.textContent : '').trim() || 'Guest';
+        nm.textContent = n;
+        var im = u.querySelector('img');
+        if (im && im.src) { av.style.backgroundImage = 'url("' + im.src + '")'; av.textContent = ''; }
+        else { av.style.backgroundImage = ''; av.textContent = n.charAt(0).toUpperCase(); }
+        out.style.display = u.querySelector('button') ? '' : 'none';
+      }
+      var au = $('authArea');
+      if (au) new MutationObserver(syncUser).observe(au, { childList: true, subtree: true });
+      syncUser();
+      $('sideOut').onclick = function () {
+        var b = document.querySelector('#authArea .tb-user button'); if (b) b.click();
+      };
+
+      var ids = ['home', 'menu', 'offers', 'order'];
+      function mark() {
+        var cur = 'home';
+        ids.forEach(function (id) {
+          var e = $(id); if (e && e.getBoundingClientRect().top <= 160) cur = id;
+        });
+        side.querySelectorAll('a[data-s]').forEach(function (a) {
+          a.classList.toggle('active', a.getAttribute('data-s') === cur);
+        });
+      }
+      window.addEventListener('scroll', mark, { passive: true });
+      mark();
+    })();
+    </script>
+</body>
+
+</html>
